@@ -18,7 +18,15 @@ class Database {
       queueLimit: 0,
     });
 
-    console.log('📦 Database pool created');
+    // Test connection
+    try {
+      const connection = await this.pool.getConnection();
+      console.log('📦 Database pool created & connected');
+      connection.release();
+    } catch (error) {
+      console.error('❌ Database connection failed:', (error as Error).message);
+      throw error;
+    }
   }
 
   async getConnection(): Promise<PoolConnection> {
