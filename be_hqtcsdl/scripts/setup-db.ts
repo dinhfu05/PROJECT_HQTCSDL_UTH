@@ -41,6 +41,7 @@ async function main() {
 
     await runScript('create-tables.sql');
     await runScript('seed-data.sql');
+    await runScript('create-indexes.sql');
 
     console.log('\n✨ Database setup complete!');
   } catch (error) {
