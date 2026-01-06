@@ -11,22 +11,16 @@ export class ProductsRepo {
   async findById(id: number): Promise<ProductDetail | null> {
     const sql = `
       SELECT 
-        p.id,
-        p.name,
-        p.description,
-        p.price,
-        p.original_price,
+        p.productId,
+        p.productName,
+        p.productDescription,
+        p.productPrice,
         p.category_id,
-        c.name as category_name,
-        p.stock_quantity,
-        p.sales_count,
-        p.rating,
-        p.location,
         p.created_at,
         p.updated_at
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.id = ?
+      WHERE p.productId = ?
     `;
 
     const [product] = await database.query<ProductRow[]>(sql, [id]);
@@ -36,17 +30,15 @@ export class ProductsRepo {
   // Create new product
   async create(data: CreateProductDto): Promise<number> {
     const sql = `
-      INSERT INTO products (name, description, price, original_price, category_id, stock_quantity)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO products (productName, productDescription, productPrice, category_id)
+      VALUES (?, ?, ?, ?)
     `;
 
     const result = await database.execute(sql, [
-      data.name,
-      data.description || null,
-      data.price,
-      data.original_price || null,
+      data.productName,
+      data.productDescription || null,
+      data.productPrice,
       data.category_id,
-      data.stock_quantity || 0,
     ]);
 
     return result.insertId;
@@ -57,29 +49,21 @@ export class ProductsRepo {
     const fields: string[] = [];
     const values: unknown[] = [];
 
-    if (data.name !== undefined) {
-      fields.push('name = ?');
-      values.push(data.name);
+    if (data.productName !== undefined) {
+      fields.push('productName = ?');
+      values.push(data.productName);
     }
-    if (data.description !== undefined) {
-      fields.push('description = ?');
-      values.push(data.description);
+    if (data.productDescription !== undefined) {
+      fields.push('productDescription = ?');
+      values.push(data.productDescription);
     }
-    if (data.price !== undefined) {
-      fields.push('price = ?');
-      values.push(data.price);
-    }
-    if (data.original_price !== undefined) {
-      fields.push('original_price = ?');
-      values.push(data.original_price);
+    if (data.productPrice !== undefined) {
+      fields.push('productPrice = ?');
+      values.push(data.productPrice);
     }
     if (data.category_id !== undefined) {
       fields.push('category_id = ?');
       values.push(data.category_id);
-    }
-    if (data.stock_quantity !== undefined) {
-      fields.push('stock_quantity = ?');
-      values.push(data.stock_quantity);
     }
 
     if (fields.length === 0) return false;
@@ -87,7 +71,7 @@ export class ProductsRepo {
     fields.push('updated_at = NOW()');
     values.push(id);
 
-    const sql = `UPDATE products SET ${fields.join(', ')} WHERE id = ?`;
+    const sql = `UPDATE products SET ${fields.join(', ')} WHERE productId = ?`;
     const result = await database.execute(sql, values);
 
     return result.affectedRows > 0;
@@ -95,7 +79,7 @@ export class ProductsRepo {
 
   // Delete product
   async delete(id: number): Promise<boolean> {
-    const sql = `DELETE FROM products WHERE id = ?`;
+    const sql = `DELETE FROM products WHERE productId = ?`;
     const result = await database.execute(sql, [id]);
     return result.affectedRows > 0;
   }

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './modules';
+import { productsModule } from './modules/products/products.module';
 import { errorMiddleware, loggerMiddleware } from './common/middleware';
 
 dotenv.config();
@@ -46,5 +47,6 @@ export class AppModule {
 
     // Module routes
     this.app.use('/api/users', this.usersModule.router);
+    this.app.use('/products', productsModule);
   }
 }
