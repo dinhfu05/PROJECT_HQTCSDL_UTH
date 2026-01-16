@@ -18,4 +18,4 @@ export const config = {
     secret: process.env.JWT_SECRET || 'your-root123-key',
     expiresIn: process.env.JWT_EXPIRES_IN || '1d',
   },
-};
+}; 
