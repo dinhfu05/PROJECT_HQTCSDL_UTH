@@ -10,10 +10,9 @@ export interface ListingQueryParams {
   minPrice?: number;
   maxPrice?: number;
   search?: string;
-  inStock?: boolean;
 
   // Sorting
-  sortBy?: 'price' | 'created_at' | 'name' | 'sales_count';
+  sortBy?: 'productPrice' | 'created_at' | 'productName';
   sortOrder?: 'asc' | 'desc';
 }
 
@@ -30,16 +29,15 @@ export interface ListingResult<T> {
 }
 
 export interface ProductListingItem {
-  id: number;
-  name: string;
-  price: number;
+  productId: number;
+  productName: string;
+  productPrice: number;
   category_id: number;
   category_name?: string;
-  stock_quantity?: number;
   created_at: Date;
 }
 
 export interface CursorData {
-  id: number;
+  productId: number;
   sortValue: string | number;
 }

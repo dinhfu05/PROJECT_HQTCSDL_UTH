@@ -38,6 +38,23 @@ export class ListingService {
     };
   }
 
+  // Get ALL products without pagination
+  async getAllProducts(): Promise<ListingResult<ProductListingItem>> {
+    const { products, db_ms } = await listingRepo.getAllProducts();
+    
+    return {
+      data: products,
+      nextCursor: null,
+      hasMore: false,
+      total: products.length,
+      perf: {
+        db_ms: Math.round(db_ms * 100) / 100,
+        total_ms: 0, // Simplified for this simple query
+      },
+    };
+  }
+
+
   // Get listing with total count (slower, only for first page)
   async getProductsWithCount(
     queryParams: Record<string, unknown>
@@ -74,7 +91,7 @@ export class ListingService {
     const sortBy = params.sortBy || 'created_at';
 
     const cursorData: CursorData = {
-      id: lastItem.id,
+      productId: lastItem.productId,
       sortValue: lastItem[sortBy as keyof ProductListingItem] as string | number,
     };
 

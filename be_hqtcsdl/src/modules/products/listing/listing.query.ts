@@ -19,7 +19,6 @@ export class ListingQuery {
       minPrice: query.minPrice ? Number(query.minPrice) : undefined,
       maxPrice: query.maxPrice ? Number(query.maxPrice) : undefined,
       search: query.search as string | undefined,
-      inStock: query.inStock === 'true' ? true : undefined,
 
       // Sorting
       sortBy: this.parseSortBy(query.sortBy as string),
@@ -29,10 +28,10 @@ export class ListingQuery {
 
   private parseSortBy(
     sortBy?: string
-  ): 'price' | 'created_at' | 'name' | 'sales_count' {
-    const allowed = ['price', 'created_at', 'name', 'sales_count'];
+  ): 'productPrice' | 'created_at' | 'productName' {
+    const allowed = ['productPrice', 'created_at', 'productName'];
     return allowed.includes(sortBy || '')
-      ? (sortBy as 'price' | 'created_at' | 'name' | 'sales_count')
+      ? (sortBy as 'productPrice' | 'created_at' | 'productName')
       : 'created_at';
   }
 
@@ -51,23 +50,19 @@ export class ListingQuery {
     }
 
     if (this.params.minPrice !== undefined) {
-      conditions.push('p.price >= ?');
+      conditions.push('p.productPrice >= ?');
       values.push(this.params.minPrice);
     }
 
     if (this.params.maxPrice !== undefined) {
-      conditions.push('p.price <= ?');
+      conditions.push('p.productPrice <= ?');
       values.push(this.params.maxPrice);
     }
 
     if (this.params.search) {
       // Use FULLTEXT if available, fallback to LIKE
-      conditions.push('p.name LIKE ?');
+      conditions.push('p.productName LIKE ?');
       values.push(`%${this.params.search}%`);
-    }
-
-    if (this.params.inStock) {
-      conditions.push('p.stock_quantity > 0');
     }
 
     return {
@@ -79,7 +74,7 @@ export class ListingQuery {
   // Build ORDER BY clause
   buildOrderByClause(): string {
     const { sortBy, sortOrder } = this.params;
-    return `ORDER BY p.${sortBy} ${sortOrder?.toUpperCase()}, p.id ${sortOrder?.toUpperCase()}`;
+    return `ORDER BY p.${sortBy} ${sortOrder?.toUpperCase()}, p.productId ${sortOrder?.toUpperCase()}`;
   }
 
   // Decode cursor for pagination
@@ -102,10 +97,10 @@ export class ListingQuery {
     const { sortBy, sortOrder } = this.params;
     const operator = sortOrder === 'desc' ? '<' : '>';
 
-    // Composite cursor: (sortValue, id) for stable pagination
+    // Composite cursor: (sortValue, productId) for stable pagination
     return {
-      sql: `AND (p.${sortBy} ${operator} ? OR (p.${sortBy} = ? AND p.id ${operator} ?))`,
-      values: [cursor.sortValue, cursor.sortValue, cursor.id],
+      sql: `AND (p.${sortBy} ${operator} ? OR (p.${sortBy} = ? AND p.productId ${operator} ?))`,
+      values: [cursor.sortValue, cursor.sortValue, cursor.productId],
     };
   }
 

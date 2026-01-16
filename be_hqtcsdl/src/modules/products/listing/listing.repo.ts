@@ -22,12 +22,11 @@ export class ListingRepo {
     // Build SQL - index-friendly structure
     const sql = `
       SELECT 
-        p.id,
-        p.name,
-        p.price,
+        p.productId,
+        p.productName,
+        p.productPrice,
         p.category_id,
         c.name as category_name,
-        p.stock_quantity,
         p.created_at
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
@@ -46,6 +45,32 @@ export class ListingRepo {
 
     return { products, db_ms };
   }
+
+  // Get ALL products (no pagination/limit)
+  async getAllProducts(): Promise<{ products: ProductListingItem[]; db_ms: number }> {
+    const startTime = process.hrtime.bigint();
+
+    const sql = `
+      SELECT 
+        p.productId,
+        p.productName,
+        p.productPrice,
+        p.category_id,
+        c.name as category_name,
+        p.created_at
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      ORDER BY p.created_at DESC
+    `;
+
+    const products = await database.query<ProductRow[]>(sql);
+
+    const endTime = process.hrtime.bigint();
+    const db_ms = Number(endTime - startTime) / 1_000_000;
+
+    return { products, db_ms };
+  }
+
 
   // Count total (for first page only, expensive with 1M rows)
   async countTotal(query: ListingQuery): Promise<number> {
@@ -68,7 +93,7 @@ export class ListingRepo {
 
     const sql = `
       EXPLAIN
-      SELECT p.id, p.name, p.price
+      SELECT p.productId, p.productName, p.productPrice
       FROM products p
       ${where.sql}
       ${orderBy}
@@ -85,7 +110,7 @@ export class ListingRepo {
 
     const sql = `
       EXPLAIN ANALYZE
-      SELECT p.id, p.name, p.price
+      SELECT p.productId, p.productName, p.productPrice
       FROM products p
       ${where.sql}
       ${orderBy}
