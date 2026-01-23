@@ -2,6 +2,7 @@
 
 import { Request, Response, Router } from 'express';
 import { productsService } from './products.service';
+import { cacheHeadersMiddleware } from './cache.middleware';
 
 /**
  * @swagger
@@ -10,6 +11,9 @@ import { productsService } from './products.service';
  *   description: Product management (CRUD)
  */
 const router = Router();
+
+// Apply cache headers middleware to all routes
+router.use(cacheHeadersMiddleware);
 
 /**
  * @swagger
@@ -150,7 +154,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
     const product = await productsService.updateProduct(id, req.body);
-    
+
     if (!product) {
       return res.status(404).json({
         success: false,
@@ -194,7 +198,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
     const deleted = await productsService.deleteProduct(id);
-    
+
     if (!deleted) {
       return res.status(404).json({
         success: false,
