@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { UsersModule } from './modules';
 import { productsModule } from './modules/products/products.module';
 import { errorMiddleware, loggerMiddleware } from './common/middleware';
+import { config } from './config';
 
 dotenv.config();
 
@@ -32,7 +33,7 @@ export class AppModule {
     this.usersModule = new UsersModule();
 
     // Register routes
-    this.registerRoutes();
+    await this.registerRoutes();
 
     // Error handling middleware (must be last)
     this.app.use(errorMiddleware);
@@ -40,7 +41,7 @@ export class AppModule {
     return this.app;
   }
 
-  private static registerRoutes(): void {
+  private static async registerRoutes(): Promise<void> {
     // App routes
     this.app.get('/', this.appController.getHello.bind(this.appController));
     this.app.get('/health', this.appController.getHealth.bind(this.appController));
@@ -48,5 +49,18 @@ export class AppModule {
     // Module routes
     this.app.use('/api/users', this.usersModule.router);
     this.app.use('/products', productsModule);
+
+    // Debug routes (development only)
+    if (config.app.env === 'development') {
+      const { performanceDebugModule } = await import('./modules/debug/performance.module');
+      const { cacheDebugModule } = await import('./modules/debug/cache.module');
+
+      this.app.use('/api/debug', performanceDebugModule);
+      this.app.use('/api/debug', cacheDebugModule);
+
+      console.log('🔧 Debug endpoints enabled at /api/debug');
+      console.log('   - Database indexes: /api/debug/indexes/*');
+      console.log('   - Cache monitoring: /api/debug/cache/*');
+    }
   }
 }

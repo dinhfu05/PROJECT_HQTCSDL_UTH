@@ -1,6 +1,7 @@
 import { Application } from 'express';
 import { AppModule } from './app.module';
 import { database } from './infra/database';
+import { redisClient } from './infra/cache';
 import { config } from './config';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
@@ -8,6 +9,9 @@ import { swaggerSpec } from './config/swagger';
 async function bootstrap() {
   // Connect to database
   await database.connect();
+
+  // Connect to Redis (non-blocking)
+  await redisClient.connect();
 
   // Create Express app
   const app: Application = await AppModule.create();
@@ -26,6 +30,7 @@ async function bootstrap() {
   process.on('SIGINT', async () => {
     console.log('\n🛑 Shutting down...');
     await database.close();
+    await redisClient.disconnect();
     process.exit(0);
   });
 }
