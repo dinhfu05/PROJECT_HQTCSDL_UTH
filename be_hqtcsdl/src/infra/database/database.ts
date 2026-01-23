@@ -37,12 +37,12 @@ class Database {
   }
 
   // Execute SELECT queries - returns rows
-  async query<T extends RowDataPacket[]>(sql: string, params?: unknown[]): Promise<T> {
+  async query<T>(sql: string, params?: unknown[]): Promise<T> {
     if (!this.pool) {
       await this.connect();
     }
-    const [rows] = await this.pool!.query<T>(sql, params);
-    return rows;
+    const [rows] = await this.pool!.query(sql, params);
+    return rows as T;
   }
 
   // Execute INSERT, UPDATE, DELETE - returns result info
@@ -55,12 +55,12 @@ class Database {
   }
 
   // Execute raw query with EXPLAIN for performance analysis
-  async explain<T extends RowDataPacket[]>(sql: string, params?: unknown[]): Promise<T> {
+  async explain<T>(sql: string, params?: unknown[]): Promise<T> {
     return this.query<T>(`EXPLAIN ${sql}`, params);
   }
 
   // Execute EXPLAIN ANALYZE for detailed performance metrics
-  async explainAnalyze<T extends RowDataPacket[]>(sql: string, params?: unknown[]): Promise<T> {
+  async explainAnalyze<T>(sql: string, params?: unknown[]): Promise<T> {
     return this.query<T>(`EXPLAIN ANALYZE ${sql}`, params);
   }
 
