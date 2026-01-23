@@ -1,6 +1,6 @@
 // Listing Repository - Raw SQL optimized for performance
 
-import { RowDataPacket } from 'mysql2/promise';
+import type { RowDataPacket } from 'mysql2/promise';
 import { database } from '../../../infra/database';
 import { ListingQuery } from './listing.query';
 import { ProductListingItem, CursorData } from './listing.types';
