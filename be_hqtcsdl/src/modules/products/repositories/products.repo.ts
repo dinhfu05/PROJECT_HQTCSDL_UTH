@@ -1,14 +1,23 @@
-// Products Repository - CRUD operations
+// Products Repository - CRUD operations with Redis caching
 
-import { RowDataPacket } from 'mysql2/promise';
 import { database } from '../../../infra/database';
+import { cacheService, CacheKeyBuilder } from '../../../infra/cache';
+import { config } from '../../../config';
 import { ProductDetail, CreateProductDto, UpdateProductDto } from '../products.types';
-
-interface ProductRow extends RowDataPacket, ProductDetail {}
 
 export class ProductsRepo {
   // Get single product by ID with full details
   async findById(id: number): Promise<ProductDetail | null> {
+    // Build cache key
+    const cacheKey = CacheKeyBuilder.productItem(id);
+
+    // Try cache first
+    const cached = await cacheService.get<ProductDetail>(cacheKey);
+    if (cached) {
+      return cached; // Cache HIT
+    }
+
+    // Cache MISS - query database
     const sql = `
       SELECT 
         p.productId,
@@ -23,7 +32,13 @@ export class ProductsRepo {
       WHERE p.productId = ?
     `;
 
-    const [product] = await database.query<ProductRow[]>(sql, [id]);
+    const [product] = await database.query<ProductDetail[]>(sql, [id]);
+
+    // Store in cache if found
+    if (product) {
+      await cacheService.set(cacheKey, product, config.redis.ttl.products);
+    }
+
     return product || null;
   }
 
@@ -74,14 +89,37 @@ export class ProductsRepo {
     const sql = `UPDATE products SET ${fields.join(', ')} WHERE productId = ?`;
     const result = await database.execute(sql, values);
 
-    return result.affectedRows > 0;
+    const success = result.affectedRows > 0;
+
+    // Invalidate cache if updated
+    if (success) {
+      const cacheKey = CacheKeyBuilder.productItem(id);
+      await cacheService.del(cacheKey);
+
+      // Also invalidate product lists (they may include this product)
+      await cacheService.flushPattern(CacheKeyBuilder.productListsPattern());
+    }
+
+    return success;
   }
 
   // Delete product
   async delete(id: number): Promise<boolean> {
     const sql = `DELETE FROM products WHERE productId = ?`;
     const result = await database.execute(sql, [id]);
-    return result.affectedRows > 0;
+
+    const success = result.affectedRows > 0;
+
+    // Invalidate cache if deleted
+    if (success) {
+      const cacheKey = CacheKeyBuilder.productItem(id);
+      await cacheService.del(cacheKey);
+
+      // Also invalidate product lists
+      await cacheService.flushPattern(CacheKeyBuilder.productListsPattern());
+    }
+
+    return success;
   }
 }
 
